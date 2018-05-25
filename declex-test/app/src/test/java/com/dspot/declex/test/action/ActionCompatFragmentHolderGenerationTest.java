@@ -15,6 +15,7 @@
  */
 package com.dspot.declex.test.action;
 
+import android.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -28,7 +29,9 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,18 +46,68 @@ import static org.robolectric.util.ReflectionHelpers.setField;
 @RunWith(RobolectricTestRunner.class)
 public class ActionCompatFragmentHolderGenerationTest {
 
-    @Test
-    public void testInitMethods() throws Exception {
-        FragmentTransaction transaction = mock(FragmentTransaction.class);
+    private FragmentTransaction transaction;
+    private AppCompatActivity activity;
+
+    private android.app.FragmentTransaction androidAppTransaction;
+
+    private void mockActivity(){
+
+        androidAppTransaction = mock(android.app.FragmentTransaction.class);
+
+        android.app.FragmentManager fragmentManager = mock(android.app.FragmentManager.class);
+        when(fragmentManager.beginTransaction()).thenReturn(androidAppTransaction);
+
+        activity = mock(AppCompatActivity.class);
+        when(activity.getFragmentManager()).thenReturn(fragmentManager);
+    }
+
+    private void mockAppCompatActivity(){
+
+        transaction = mock(FragmentTransaction.class);
 
         FragmentManager fragmentManager = mock(FragmentManager.class);
         when(fragmentManager.beginTransaction()).thenReturn(transaction);
 
-        AppCompatActivity activity = mock(AppCompatActivity.class);
+        activity = mock(AppCompatActivity.class);
         when(activity.getSupportFragmentManager()).thenReturn(fragmentManager);
+    }
+
+    @Test
+    public void testInitMethods() throws Exception {
 
         {
+            mockActivity();
+
             ActionFragmentActionHolder_ holder = ActionFragmentActionHolder_.getInstance_(activity);
+            {
+                holder.init();
+            }
+
+            assertNotNull(getField(holder, "builder"));
+            assertEquals(androidAppTransaction, getField(holder, "transaction"));
+        }
+
+        {
+            mockActivity();
+
+            ActionFragmentActionHolder_ holder = ActionFragmentActionHolder_.getInstance_(activity);
+            {
+                holder.init("FragmentTag");
+            }
+
+            assertNotNull(getField(holder, "builder"));
+            assertEquals(androidAppTransaction, getField(holder, "transaction"));
+        }
+    }
+
+    @Test
+    public void testAppCompatInitMethods() throws Exception {
+
+        {
+            mockAppCompatActivity();
+
+            ActionCompatFragmentActionHolder_ holder = ActionCompatFragmentActionHolder_.getInstance_(activity);
             {
                 holder.init();
             }
@@ -64,7 +117,9 @@ public class ActionCompatFragmentHolderGenerationTest {
         }
 
         {
-            ActionFragmentActionHolder_ holder = ActionFragmentActionHolder_.getInstance_(activity);
+            mockAppCompatActivity();
+
+            ActionCompatFragmentActionHolder_ holder = ActionCompatFragmentActionHolder_.getInstance_(activity);
             {
                 holder.init("FragmentTag");
             }
@@ -90,11 +145,12 @@ public class ActionCompatFragmentHolderGenerationTest {
 
     @Test
     public void testDefaultCallToExecute() throws Exception {
-        FragmentTransaction transaction = mock(FragmentTransaction.class);
+
+        transaction = mock(FragmentTransaction.class);
         when(transaction.commit()).thenReturn(0);
         when(transaction.replace(anyInt(), any(ActionCompatFragment_.class), any(String.class))).thenReturn(transaction);
 
-        ActionFragmentActionHolder_ holder = ActionFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
+        ActionCompatFragmentActionHolder_ holder = ActionCompatFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
         setField(holder, "transaction", transaction);
 
         final AtomicBoolean calledStart = new AtomicBoolean(false);
@@ -121,7 +177,7 @@ public class ActionCompatFragmentHolderGenerationTest {
         FragmentTransaction transaction = mock(FragmentTransaction.class);
         when(transaction.replace(anyInt(), any(ActionCompatFragment_.class), isNull(String.class))).thenReturn(transaction);
 
-        ActionFragmentActionHolder_ holder = ActionFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
+        ActionCompatFragmentActionHolder_ holder = ActionCompatFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
         setField(holder, "transaction", transaction);
 
         {
@@ -138,7 +194,7 @@ public class ActionCompatFragmentHolderGenerationTest {
         FragmentTransaction transaction = mock(FragmentTransaction.class);
         when(transaction.add(anyInt(), any(ActionCompatFragment_.class), isNull(String.class))).thenReturn(transaction);
 
-        ActionFragmentActionHolder_ holder = ActionFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
+        ActionCompatFragmentActionHolder_ holder = ActionCompatFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
         setField(holder, "transaction", transaction);
 
         {
@@ -155,7 +211,7 @@ public class ActionCompatFragmentHolderGenerationTest {
         FragmentTransaction transaction = mock(FragmentTransaction.class);
         when(transaction.addToBackStack(isNull(String.class))).thenReturn(transaction);
 
-        ActionFragmentActionHolder_ holder = ActionFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
+        ActionCompatFragmentActionHolder_ holder = ActionCompatFragmentActionHolder_.getInstance_(RuntimeEnvironment.application);
         setField(holder, "transaction", transaction);
 
         {
